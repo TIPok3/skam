@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Честная вебка</title>
+  <title>Честная вебка-трансляция</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -64,28 +64,30 @@
       margin: 10px 0;
     }
     .hidden { display: none; }
+    .error { color: #ff6b6b; }
   </style>
 </head>
 <body>
   <div class="card" id="app">
-    <!-- Контент будет вставлен JS -->
+    <!-- Контент заполняется JS -->
   </div>
 
-  <!-- Подключаем PeerJS -->
+  <!-- Подключаем PeerJS с CDN -->
   <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 
   <script>
     (function() {
-      // --- Парсим параметры из URL ---
+      // Параметры URL
       const params = new URLSearchParams(window.location.search);
       const role = params.get('role');        // 'viewer' или 'sender'
-      const targetPeerId = params.get('peer'); // нужен для отправителя
+      const targetPeerId = params.get('peer'); // ID зрителя (для отправителя)
 
       const app = document.getElementById('app');
       let peer;
-      let localStream; // для остановки своей камеры при необходимости
+      let localStream;
+      let currentCall; // чтобы можно было разорвать звонок
 
-      // --- Вспомогательная функция для остановки камеры ---
+      // Функция остановки камеры
       function stopCamera() {
         if (localStream) {
           localStream.getTracks().forEach(track => track.stop());
@@ -93,27 +95,67 @@
         }
       }
 
-      // --- Инициализация PeerJS ---
+      // Инициализация PeerJS с резервным сервером
       function initPeer() {
-        peer = new Peer(); // используем бесплатный облачный сигнальный сервер
+        // Основной сервер PeerJS Cloud
+        const primaryConfig = {
+          host: '0.peerjs.com',
+          port: 443,
+          path: '/',
+          secure: true,
+          debug: 2
+        };
+        // Резервный публичный сервер (можно заменить на свой)
+        const fallbackConfig = {
+          host: 'peerjs-server.herokuapp.com',
+          port: 443,
+          path: '/',
+          secure: true,
+          debug: 2
+        };
 
-        peer.on('open', (myPeerId) => {
-          if (role === 'viewer') {
-            renderViewer(myPeerId);
-          } else if (role === 'sender' && targetPeerId) {
-            renderSender(myPeerId);
-          } else {
-            showError('Некорректные параметры. Для отправителя нужен ?peer=ID.');
+        function connectWithConfig(config, isFallback = false) {
+          if (peer) {
+            peer.destroy();
           }
-        });
+          peer = new Peer(config);
 
-        peer.on('error', (err) => {
-          console.error('PeerJS error:', err);
-          alert('Ошибка соединения: ' + err.type);
-        });
+          peer.on('open', (myPeerId) => {
+            console.log('✅ Подключён к', config.host, 'ID:', myPeerId);
+            if (role === 'viewer') {
+              renderViewer(myPeerId);
+            } else if (role === 'sender' && targetPeerId) {
+              renderSender(myPeerId);
+            } else {
+              showError('Некорректные параметры. Для отправителя нужен ?peer=ID.');
+            }
+          });
+
+          peer.on('error', (err) => {
+            console.error('❌ Ошибка PeerJS:', err.type, err);
+            if (err.type === 'server-error' && config.host === primaryConfig.host) {
+              // Переключаемся на резерв
+              console.warn('Основной сервер недоступен, пробую запасной...');
+              app.innerHTML = '<p>Проблема с основным сервером, переключаюсь на запасной...</p>';
+              connectWithConfig(fallbackConfig, true);
+            } else if (err.type === 'peer-unavailable') {
+              alert('Пользователь с таким ID не найден. Попроси друга обновить страницу и получить новый ID.');
+            } else {
+              alert('Ошибка соединения: ' + err.type + '. Попробуйте обновить страницу или проверьте интернет.');
+            }
+          });
+
+          peer.on('disconnected', () => {
+            console.log('Соединение потеряно, пытаюсь переподключиться...');
+            peer.reconnect();
+          });
+        }
+
+        // Стартуем с основного сервера
+        connectWithConfig(primaryConfig);
       }
 
-      // --- Интерфейс ЗРИТЕЛЯ (ты) ---
+      // --- Интерфейс ЗРИТЕЛЯ (тот, кто смотрит) ---
       function renderViewer(myId) {
         app.innerHTML = `
           <h2>🎥 Ты — зритель</h2>
@@ -123,17 +165,18 @@
           <div class="id-display" style="font-size:14px;">
             ${window.location.origin}${window.location.pathname}?role=sender&peer=${myId}
           </div>
-          <p style="margin-top:15px;">Ожидаю подключения...</p>
+          <p style="margin-top:15px;">Ожидаю подключения друга...</p>
           <div id="videoContainer"></div>
         `;
 
-        // Когда друг позвонит, принимаем звонок
+        // Принимаем звонок от отправителя
         peer.on('call', (call) => {
-          // Отвечаем без отправки своего видео (односторонняя передача)
+          currentCall = call;
+          // Отвечаем без своего видео (односторонняя передача)
           call.answer();
           call.on('stream', (remoteStream) => {
             const container = document.getElementById('videoContainer');
-            container.innerHTML = ''; // очищаем
+            container.innerHTML = '';
             const video = document.createElement('video');
             video.srcObject = remoteStream;
             video.autoplay = true;
@@ -141,27 +184,31 @@
             video.controls = false;
             container.appendChild(video);
           });
+          call.on('close', () => {
+            const container = document.getElementById('videoContainer');
+            container.innerHTML = '<p>Трансляция завершена.</p>';
+          });
+          call.on('error', (err) => {
+            console.error('Ошибка звонка:', err);
+          });
         });
       }
 
-      // --- Интерфейс ОТПРАВИТЕЛЯ (друг) ---
+      // --- Интерфейс ОТПРАВИТЕЛЯ (друг, который показывает камеру) ---
       function renderSender(myId) {
-        // Сохраняем целевой ID
         const target = targetPeerId;
 
         app.innerHTML = `
           <h2>📡 Трансляция для друга</h2>
           <div class="warning-box">
-            <strong>⚠️ Внимание!</strong><br>
+            <strong>⚠️ Полная прозрачность!</strong><br>
             Сейчас будет запрошен доступ к твоей веб-камере.<br>
             Видео будет передаваться напрямую пользователю с ID: <strong>${target}</strong>.<br>
-            Ты согласен на это? Нажми кнопку ниже, чтобы начать.
+            Ты видишь это предупреждение и можешь отказаться. Нажав кнопку ниже, ты подтверждаешь согласие.
           </div>
           <button class="btn-start" id="startBtn">✅ Да, я согласен, начать трансляцию</button>
           <button class="btn-stop hidden" id="stopBtn">⏹ Остановить</button>
-          <div id="localVideoContainer" style="margin-top:20px;">
-            <!-- Здесь будет локальное видео (чтобы друг видел себя) -->
-          </div>
+          <div id="localVideoContainer" style="margin-top:20px;"></div>
         `;
 
         const startBtn = document.getElementById('startBtn');
@@ -169,9 +216,10 @@
 
         startBtn.addEventListener('click', async () => {
           try {
-            // Запрашиваем доступ к веб-камере
+            // Запрос камеры
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-            // Показываем локальное видео (чтобы друг видел себя)
+
+            // Показываем локальное видео (друг видит себя)
             const localVideo = document.createElement('video');
             localVideo.srcObject = localStream;
             localVideo.autoplay = true;
@@ -180,72 +228,65 @@
             localVideo.style.maxWidth = '300px';
             document.getElementById('localVideoContainer').appendChild(localVideo);
 
-            // Звоним зрителю с нашим потоком
-            const call = peer.call(target, localStream);
-            call.on('error', (err) => {
-              console.error('Call error:', err);
-              alert('Не удалось соединиться. Проверь ID получателя.');
+            // Звоним зрителю
+            currentCall = peer.call(target, localStream);
+            currentCall.on('error', (err) => {
+              console.error('Ошибка при звонке:', err);
+              alert('Не удалось соединиться. Проверь, что друг открыл страницу зрителя и его ID актуален.');
+            });
+            currentCall.on('close', () => {
+              stopCameraAndCleanup();
             });
 
-            // Меняем кнопки
             startBtn.classList.add('hidden');
             stopBtn.classList.remove('hidden');
-
-            // Если зритель закроет соединение, останавливаем камеру
-            call.on('close', () => {
-              stopCamera();
-              localVideo.remove();
-              startBtn.classList.remove('hidden');
-              stopBtn.classList.add('hidden');
-            });
-
           } catch (err) {
             console.error('Ошибка доступа к камере:', err);
-            alert('Не удалось получить доступ к камере. Разреши использование камеры в браузере.');
+            alert('Не удалось получить доступ к камере. Разреши использование в браузере.');
           }
         });
 
         stopBtn.addEventListener('click', () => {
+          stopCameraAndCleanup();
+        });
+
+        function stopCameraAndCleanup() {
           stopCamera();
-          // Удаляем видеоэлементы
-          const container = document.getElementById('localVideoContainer');
-          container.innerHTML = '';
-          // Разрываем все звонки
-          if (peer) {
-            // PeerJS не даёт простого способа разорвать конкретный звонок,
-            // поэтому пересоздадим peer или просто остановим камеру,
-            // что разорвёт поток. Для простоты остановим камеру и перезагрузим peer.
-            peer.destroy();
-            initPeer(); // переинициализируем, чтобы можно было позвонить заново
+          // Останавливаем звонок
+          if (currentCall) {
+            currentCall.close();
+            currentCall = null;
           }
+          document.getElementById('localVideoContainer').innerHTML = '';
           startBtn.classList.remove('hidden');
           stopBtn.classList.add('hidden');
-        });
+        }
       }
 
-      // --- Ошибка ---
+      // --- Страница ошибки ---
       function showError(message) {
         app.innerHTML = `
           <h2>❌ Ошибка</h2>
           <p>${message}</p>
-          <p><a href="?role=viewer">Открыть как зритель</a></p>
+          <p><a href="?role=viewer">Открыть как зритель</a> | <a href="?role=sender&peer=ID">Открыть как отправитель (нужен ID)</a></p>
         `;
       }
 
-      // --- Старт ---
+      // --- Точка входа ---
       if (!role) {
-        // Если роль не указана, показываем выбор
+        // Если роль не указана — показываем меню
         app.innerHTML = `
           <h2>📹 Честная вебка-трансляция</h2>
           <p>Выбери режим:</p>
-          <a href="?role=viewer" style="display:inline-block;margin:10px;padding:10px 20px;background:#4CAF50;color:white;text-decoration:none;border-radius:5px;">Я зритель (смотреть друга)</a>
-          <a href="?role=sender&peer=НУЖЕН_ID" style="display:inline-block;margin:10px;padding:10px 20px;background:#2196F3;color:white;text-decoration:none;border-radius:5px;">Я отправитель (друг)</a>
+          <a href="?role=viewer" style="display:inline-block;margin:10px;padding:10px 20px;background:#4CAF50;color:white;text-decoration:none;border-radius:5px;">👀 Я зритель (смотреть)</a>
+          <a href="?role=sender&peer=НУЖЕН_ID" style="display:inline-block;margin:10px;padding:10px 20px;background:#2196F3;color:white;text-decoration:none;border-radius:5px;">📡 Я отправитель (показывать)</a>
+          <p style="margin-top:20px;font-size:14px;color:#aaa;">Ссылка с ID отправителя сгенерируется на странице зрителя.</p>
         `;
       } else {
         initPeer();
       }
 
-      // При уходе со страницы останавливаем камеру
+      // Очистка при уходе со страницы
       window.addEventListener('beforeunload', () => {
         stopCamera();
         if (peer) peer.destroy();
