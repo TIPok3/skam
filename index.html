@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>КиберЩит — защити себя</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'%3E%3Cpath d='M60 10 L90 25 L90 55 Q90 85 60 110 Q30 85 30 55 L30 25 Z' fill='%2300FF94' stroke='%230B1E33' stroke-width='3'/%3E%3Ccircle cx='48' cy='48' r='5' fill='%230B1E33'/%3E%3Ccircle cx='72' cy='48' r='5' fill='%230B1E33'/%3E%3Cpath d='M45 62 Q60 72 75 62' stroke='%230B1E33' stroke-width='3' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+    * {
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      background-color: #0B1E33;
+      overflow-x: hidden;
+    }
+    .bubbles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .bubble {
+      position: absolute;
+      background: rgba(0, 255, 148, 0.15);
+      border-radius: 50%;
+      filter: blur(40px);
+      animation: floatBubble 20s infinite ease-in-out;
+    }
+    @keyframes floatBubble {
+      0% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+      25% { transform: translate(5%, 5%) scale(1.1); opacity: 0.4; }
+      50% { transform: translate(10%, -5%) scale(0.9); opacity: 0.2; }
+      75% { transform: translate(-5%, 10%) scale(1.2); opacity: 0.4; }
+      100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+    }
+    .floating-dots {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .dot {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: rgba(0, 255, 148, 0.3);
+      border-radius: 50%;
+      animation: float 3s infinite ease-in-out;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-30px); }
+    }
+    .mascot-glow {
+      animation: glow 3s infinite alternate;
+    }
+    @keyframes glow {
+      from { filter: drop-shadow(0 0 5px #00FF94); }
+      to { filter: drop-shadow(0 0 20px #00FF94); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+    @keyframes wink {
+      0%, 80%, 100% { transform: scaleY(1); }
+      85% { transform: scaleY(0.1); }
+    }
+    @keyframes pointWave {
+      0%, 100% { transform: rotate(0deg) translateX(0); }
+      50% { transform: rotate(3deg) translateX(2px); }
+    }
+    .mascot-container {
+      animation: float 4s ease-in-out infinite;
+    }
+    .mascot-eye-left {
+      animation: wink 6s infinite;
+      transform-origin: center;
+      transform-box: fill-box;
+    }
+    .mascot-antenna {
+      animation: antennaWave 3s ease-in-out infinite;
+      transform-origin: 60px 10px;
+    }
+    @keyframes antennaWave {
+      0%, 100% { transform: rotate(-2deg); }
+      50% { transform: rotate(2deg); }
+    }
+    .pointing-finger {
+      animation: pointWave 2.5s infinite ease-in-out;
+      transform-origin: 90px 40px;
+    }
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(3deg); }
+      75% { transform: rotate(-3deg); }
+    }
+    .topic-figure {
+      animation: wiggle 3s infinite ease-in-out;
+    }
+    /* Специальное облачко для игры: треугольник слева снизу */
+    .speech-bubble.game-bubble {
+      position: absolute;
+      background: #00FF94;
+      border-radius: 20px;
+      padding: 12px 18px;
+      color: #0B1E33;
+      font-weight: 500;
+      max-width: 280px;
+      width: max-content;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      white-space: normal;
+    }
+    .speech-bubble.game-bubble:after {
+      content: '';
+      position: absolute;
+      left: -10px;
+      bottom: 20px;
+      width: 0;
+      height: 0;
+      border-top: 10px solid transparent;
+      border-bottom: 10px solid transparent;
+      border-right: 10px solid #00FF94;
+    }
+    .topic-card {
+      background: linear-gradient(145deg, rgba(0,255,148,0.15) 0%, rgba(45,126,231,0.15) 100%);
+      border: 2px solid rgba(255,255,255,0.15);
+      border-radius: 2.5rem;
+      transition: all 0.3s;
+      backdrop-filter: blur(8px);
+      width: 100%;
+      max-width: 350px;
+      padding: 2rem 1.5rem 1.5rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+      box-shadow: 0 20px 30px -10px rgba(0,0,0,0.5);
+    }
+    .topic-card:hover {
+      border-color: #00FF94;
+      box-shadow: 0 0 30px rgba(0,255,148,0.4), 0 20px 30px -10px rgba(0,0,0,0.5);
+      transform: translateY(-8px);
+    }
+    .topic-card:hover .topic-figure {
+      animation: wiggle 1s infinite;
+    }
+    .topic-button {
+      background: linear-gradient(135deg, #00FF94, #2D7EE7);
+      color: #0B1E33;
+      font-weight: 700;
+      font-size: 1.5rem;
+      padding: 0.75rem 2rem;
+      border-radius: 60px;
+      border: none;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+      max-width: 290px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+    .topic-button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 8px 25px rgba(0,255,148,0.6);
+      background: white;
+      color: #0B1E33;
+    }
+    .topic-card:hover .bulb-filament {
+      stroke: #FFD700;
+    }
+    .topic-card:hover .bulb-glow {
+      opacity: 1;
+      transform: scale(1.2);
+    }
+    #app {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #00FF94 #0B1E33;
+      position: relative;
+      z-index: 1;
+      width: 100%;
+    }
+    #app::-webkit-scrollbar {
+      width: 6px;
+    }
+    #app::-webkit-scrollbar-track {
+      background: #0B1E33;
+    }
+    #app::-webkit-scrollbar-thumb {
+      background-color: #00FF94;
+      border-radius: 20px;
+    }
+    @media (max-width: 768px) {
+      .px-4 { padding-left: 1rem; padding-right: 1rem; }
+      .topic-card { max-width: 300px; }
+    }
+    .speech-bubble {
+      position: relative;
+      background: #00FF94;
+      border-radius: 20px;
+      padding: 12px 18px;
+      color: #0B1E33;
+      font-weight: 500;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      margin-bottom: 20px;
+    }
+    .speech-bubble:after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 12px solid transparent;
+      border-right: 12px solid transparent;
+      border-top: 12px solid #00FF94;
+    }
+  </style>
+</head>
+<body>
+  <div class="bubbles">
+    <div class="bubble" style="width: 300px; height: 300px; top: 10%; left: 5%; animation-duration: 18s;"></div>
+    <div class="bubble" style="width: 400px; height: 400px; bottom: 20%; right: 10%; animation-duration: 22s; background: rgba(45, 126, 231, 0.1);"></div>
+    <div class="bubble" style="width: 250px; height: 250px; top: 50%; left: 20%; animation-duration: 15s;"></div>
+    <div class="bubble" style="width: 350px; height: 350px; bottom: 10%; left: 30%; animation-duration: 25s; background: rgba(0, 255, 148, 0.1);"></div>
+    <div class="bubble" style="width: 200px; height: 200px; top: 80%; right: 25%; animation-duration: 20s;"></div>
+  </div>
+  <div class="floating-dots">
+    <div class="dot" style="left: 12%; top: 18%; animation-duration: 3.2s; animation-delay: 0.1s;"></div>
+    <div class="dot" style="left: 83%; top: 42%; animation-duration: 2.8s; animation-delay: 0.7s;"></div>
+    <div class="dot" style="left: 31%; top: 75%; animation-duration: 3.5s; animation-delay: 1.3s;"></div>
+    <div class="dot" style="left: 56%; top: 29%; animation-duration: 3.0s; animation-delay: 0.4s;"></div>
+    <div class="dot" style="left: 7%; top: 91%; animation-duration: 2.5s; animation-delay: 1.8s;"></div>
+    <div class="dot" style="left: 68%; top: 14%; animation-duration: 3.8s; animation-delay: 0.0s;"></div>
+    <div class="dot" style="left: 44%; top: 63%; animation-duration: 2.9s; animation-delay: 2.1s;"></div>
+    <div class="dot" style="left: 92%; top: 8%; animation-duration: 3.1s; animation-delay: 0.9s;"></div>
+    <div class="dot" style="left: 19%; top: 48%; animation-duration: 2.6s; animation-delay: 1.5s;"></div>
+    <div class="dot" style="left: 73%; top: 82%; animation-duration: 3.4s; animation-delay: 0.2s;"></div>
+    <div class="dot" style="left: 38%; top: 36%; animation-duration: 2.7s; animation-delay: 2.4s;"></div>
+    <div class="dot" style="left: 51%; top: 96%; animation-duration: 3.9s; animation-delay: 0.6s;"></div>
+    <div class="dot" style="left: 26%; top: 22%; animation-duration: 3.3s; animation-delay: 1.1s;"></div>
+    <div class="dot" style="left: 61%; top: 57%; animation-duration: 2.4s; animation-delay: 1.9s;"></div>
+    <div class="dot" style="left: 14%; top: 70%; animation-duration: 3.7s; animation-delay: 0.8s;"></div>
+    <div class="dot" style="left: 47%; top: 11%; animation-duration: 2.9s; animation-delay: 2.2s;"></div>
+    <div class="dot" style="left: 85%; top: 34%; animation-duration: 3.6s; animation-delay: 0.3s;"></div>
+    <div class="dot" style="left: 3%; top: 54%; animation-duration: 2.5s; animation-delay: 1.4s;"></div>
+    <div class="dot" style="left: 95%; top: 77%; animation-duration: 3.2s; animation-delay: 2.0s;"></div>
+    <div class="dot" style="left: 40%; top: 89%; animation-duration: 2.8s; animation-delay: 0.5s;"></div>
+  </div>
+  <div id="app" class="flex flex-col h-screen w-full">
+    <header class="fixed top-0 left-0 right-0 z-50 bg-[#0B1E33]/95 backdrop-blur-md border-b border-white/10">
+      <div class="w-full px-4 lg:px-8">
+        <div class="flex items-center justify-between h-20">
+          <div class="flex items-center gap-3 group cursor-pointer" id="logo">
+            <div class="relative">
+              <i data-lucide="shield" class="w-10 h-10 text-[#00FF94] group-hover:scale-110 transition-transform"></i>
+              <div class="absolute inset-0 bg-[#00FF94]/20 blur-xl group-hover:bg-[#00FF94]/40 transition-all"></div>
+            </div>
+            <span class="text-2xl font-bold bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] bg-clip-text text-transparent">КиберЩит</span>
+          </div>
+          <div class="hidden lg:flex items-center gap-1">
+            <button class="nav-item px-4 py-2 rounded-lg transition-all text-white/80 hover:text-white hover:bg-white/5" data-nav="phone" onclick="startLearning('phone')">Телефон</button>
+            <button class="nav-item px-4 py-2 rounded-lg transition-all text-white/80 hover:text-white hover:bg-white/5" data-nav="internet" onclick="startLearning('internet')">Интернет</button>
+            <button class="nav-item px-4 py-2 rounded-lg transition-all text-white/80 hover:text-white hover:bg-white/5" data-nav="computer" onclick="startLearning('computer')">Компьютер</button>
+            <button class="nav-item px-4 py-2 rounded-lg transition-all text-white/80 hover:text-white hover:bg-white/5" data-nav="quiz" onclick="navigateTo('quiz')">Квиз</button>
+            <button class="nav-item px-4 py-2 rounded-lg transition-all text-white/80 hover:text-white hover:bg-white/5" data-nav="game" onclick="navigateTo('game')">Найди мошенника</button>
+          </div>
+          <button class="lg:hidden p-2 text-white hover:bg-white/10 rounded-lg transition-colors" id="mobileMenuBtn">
+            <i data-lucide="menu" size="24"></i>
+          </button>
+        </div>
+        <div id="mobileNav" class="lg:hidden hidden py-4 space-y-2">
+          <button class="block w-full px-4 py-3 rounded-lg text-left text-white/80 hover:bg-white/5" data-nav="phone" onclick="startLearning('phone')">Телефон</button>
+          <button class="block w-full px-4 py-3 rounded-lg text-left text-white/80 hover:bg-white/5" data-nav="internet" onclick="startLearning('internet')">Интернет</button>
+          <button class="block w-full px-4 py-3 rounded-lg text-left text-white/80 hover:bg-white/5" data-nav="computer" onclick="startLearning('computer')">Компьютер</button>
+          <button class="block w-full px-4 py-3 rounded-lg text-left text-white/80 hover:bg-white/5" data-nav="quiz" onclick="navigateTo('quiz')">Квиз</button>
+          <button class="block w-full px-4 py-3 rounded-lg text-left text-white/80 hover:bg-white/5" data-nav="game" onclick="navigateTo('game')">Найди мошенника</button>
+        </div>
+      </div>
+    </header>
+    <main id="screenContent" class="flex-1 flex flex-col items-center justify-start w-full pt-24"></main>
+  </div>
+  <script>
+    lucide.createIcons();
+
+    let currentScreen = 'home';
+    let currentTopic = 'phone';
+    let learningStep = 0;
+    let quizState = {
+      currentQuestion: 0,
+      selectedAnswer: null,
+      showExplanation: false,
+      score: 0,
+      questions: [
+        { question: "Зачем нужно менять стандартный PIN-код SIM-карты?", options: ["Чтобы номер было легче запомнить", "Чтобы защитить SIM от использования в другом телефоне при краже", "Это требуется оператором связи", "Чтобы телефон работал быстрее"], correct: 1, explanation: "PIN-код SIM-карты не даёт злоумышленнику переставить вашу SIM в другой телефон и получить доступ к SMS с кодами подтверждения. Стандартные PIN (0000, 1234) легко угадать." },
+        { question: "Какое разрешение для приложения-фонарика должно насторожить?", options: ["Доступ к камере", "Доступ к контактам", "Доступ к интернету", "Доступ к вибрации"], correct: 1, explanation: "Фонарику не нужны ваши контакты. Если простое приложение запрашивает доступ к личным данным — это признак вредоносного ПО." },
+        { question: "Что из перечисленного НЕ является признаком заражения телефона вирусом?", options: ["Резкое падение производительности", "Появление незнакомых приложений", "Регулярные обновления системы от производителя", "Необъяснимые списания с карты"], correct: 2, explanation: "Обновления системы — это нормально и даже полезно (они закрывают уязвимости). Остальные пункты — типичные симптомы заражения." },
+        { question: "Что такое фишинг?", options: ["Вид рыбалки", "Поддельные сайты для кражи логинов и паролей", "Программа для ускорения интернета", "Спам-рассылка"], correct: 1, explanation: "Фишинг — это мошеннические сайты, которые копируют настоящие (банки, соцсети), чтобы выманить ваши данные. Всегда проверяйте адресную строку." },
+        { question: "Почему не стоит пользоваться бесплатными публичными Wi-Fi сетями без защиты?", options: ["Они медленные", "Трафик может быть перехвачен злоумышленниками", "За них всё равно придётся платить", "К ним сложно подключиться"], correct: 1, explanation: "В открытых сетях злоумышленник может перехватывать ваш трафик (пароли, сообщения). Используйте VPN или раздавайте интернет с телефона." },
+        { question: "Какой способ двухфакторной аутентификации самый надёжный?", options: ["Код из SMS", "Пуш-уведомление в приложении банка", "Приложение-аутентификатор (Google Authenticator)", "Код на бумажке"], correct: 2, explanation: "Коды из SMS могут перехватить (SIM-свопинг). Аутентификатор работает офлайн и привязан к устройству — это безопаснее." },
+        { question: "Что оставляет цифровой след?", options: ["Только посты в соцсетях", "Любые действия в интернете: поиск, лайки, посещения сайтов", "Только покупки в интернет-магазинах", "Только переписки в мессенджерах"], correct: 1, explanation: "Цифровой след — это всё, что вы делаете в сети: от запросов в Google до комментариев. Эти данные могут использовать для рекламы или мошенничества." },
+        { question: "Чем опасны пиратские сборки Windows?", options: ["Они занимают много места на диске", "Могут содержать встроенные вирусы, трояны, майнеры", "Не поддерживают современные игры", "Быстро разряжают батарею ноутбука"], correct: 1, explanation: "Пиратские сборки часто модифицируют, добавляя вредоносное ПО (шпионы, майнеры). Лучше использовать официальную Windows или перейти на Linux." },
+        { question: "Зачем нужна отдельная стандартная учётная запись в Windows (не администратор)?", options: ["Чтобы было красиво", "Для защиты системы: вирус под обычной учёткой не сможет изменить системные файлы", "Чтобы быстрее загружался компьютер", "Это требование Microsoft"], correct: 1, explanation: "Если вы работаете под администратором, любой вирус получает те же права. Обычная учётная запись ограничивает ущерб." },
+        { question: "Какое правило резервного копирования самое надёжное?", options: ["Хранить копии на том же диске, что и оригиналы", "Правило 3-2-1: три копии, два носителя, одна вне дома", "Делать копию раз в год", "Копировать только документы, программы не важны"], correct: 1, explanation: "Правило 3-2-1 защищает от большинства проблем: сбоя диска, пожара, вирусов-шифровальщиков." }
+      ]
+    };
+    let gameState = {
+      currentMessage: 0,
+      selectedAnswer: null,
+      showResult: false,
+      score: 0,
+      messages: [
+        { type: "sms", from: "+7 (900) 123-45-67", message: "Ваша карта заблокирована! Для разблокировки перейдите по ссылке: hxxp://sber-unlock.ru и введите данные карты. Служба безопасности Сбербанка.", isScam: true, redFlags: ["Подозрительный номер телефона", "Ссылка на левый сайт (не sberbank.ru)", "Требование ввести данные карты", "Срочность и паника"], explanation: "Это классический фишинг! Банк никогда не просит вводить данные карты по ссылке из SMS. Официальный сайт Сбербанка — sberbank.ru, а не sber-unlock.ru." },
+        { type: "email", from: "support@appl-suport.com", subject: "Подтвердите свой Apple ID", message: "Здравствуйте!\n\nМы обнаружили подозрительную активность в вашем аккаунте Apple ID. Для подтверждения владения аккаунтом перейдите по ссылке и введите свой логин и пароль:\n\nhxxps://appl-suport.com/verify\n\nЕсли вы не подтвердите аккаунт в течение 24 часов, он будет заблокирован.\n\nС уважением,\nКоманда Apple", isScam: true, redFlags: ["Опечатка в домене (appl-suport вместо apple.com)", "Требование срочных действий", "Запрос логина и пароля по ссылке", "Угроза блокировки"], explanation: "Поддельный email! Apple никогда не просит пароль по ссылке. Официальный домен Apple — apple.com. Опечатка в домене (appl-suport) — явный признак фишинга." },
+        { type: "sms", from: "Sberbank", message: "Покупка на сумму 15 234,50 руб. Карта *4523. Если это не вы, позвоните 900. Доступно: 45 122,30 руб.", isScam: false, redFlags: [], explanation: "Это легитимное SMS от банка! Номер отправителя — официальное имя банка, нет ссылок, нет требований ввести данные. Указан номер 900 — официальная горячая линия Сбербанка." },
+        { type: "sms", from: "+7 (999) 888-77-66", message: "Мама, я разбил телефон! Срочно переведи 25000₽ на этот номер: 2202 2006 1234 5678. Очень нужно! Позже объясню.", isScam: true, redFlags: ["Неизвестный номер", "Давление на эмоции (срочность)", "Просьба перевести деньги", "Нет подтверждения личности"], explanation: "Схема 'Мама, помоги!' — мошенники эксплуатируют страх за близких. Всегда перезванивай на известный номер родственника, чтобы проверить!" },
+        { type: "email", from: "delivery@cdek.ru", subject: "Ваша посылка ожидает получения", message: "Добрый день!\n\nВаша посылка № 1234567890 прибыла в пункт выдачи по адресу: ул. Ленина, 15.\n\nВы можете забрать её в течение 5 дней. При себе иметь паспорт и код: 9876.\n\nСпасибо за выбор СДЭК!", isScam: false, redFlags: [], explanation: "Легитимное письмо от службы доставки. Официальный домен cdek.ru, нет ссылок для ввода данных, конкретная информация о посылке." },
+        { type: "sms", from: "+7 (926) 555-12-34", message: "Код подтверждения: 4829. Никому не сообщайте этот код. Если вы не запрашивали код, игнорируйте это сообщение.", isScam: false, redFlags: [], explanation: "Это нормальное SMS с кодом. Главное — никому его не сообщать! Если ты не запрашивал код, просто игнорируй сообщение." },
+        { type: "email", from: "winner@lottery-2026.biz", subject: "🎉 Поздравляем! Вы выиграли 1 000 000 рублей!", message: "ПОЗДРАВЛЯЕМ!!!\n\nВаш email выиграл в международной лотерее! Сумма выигрыша: 1 000 000 рублей!\n\nДля получения приза заполните форму:\nhxxps://lottery-2026.biz/claim?id=123456\n\nУкажите:\n- ФИО\n- Номер паспорта\n- Номер карты для перевода\n\nПоторопитесь! Предложение действует 48 часов!", isScam: true, redFlags: ["Подозрительный домен (.biz вместо официального)", "Обещание лёгких денег", "Запрос паспортных данных и номера карты", "Искусственная срочность", "Ты не участвовал ни в какой лотерее"], explanation: "100% мошенничество! Бесплатный сыр бывает только в мышеловке. Никто не разыгрывает деньги просто так. Цель — украсть твои личные данные и деньги с карты." },
+        { type: "sms", from: "Gosuslugi", message: "Вам доступна выплата от государства 15000₽. Оформите на сайте gosuslugi-2026.online. Срок действия: 3 дня.", isScam: true, redFlags: ["Поддельный домен (gosuslugi-2026.online вместо gosuslugi.ru)", "Обещание денег 'просто так'", "Искусственная срочность"], explanation: "Фишинг под видом госуслуг! Официальный сайт — только gosuslugi.ru. Никаких 'выплат просто так' не бывает. Это попытка украсть доступ к твоему аккаунту." }
+      ]
+    };
+
+    const phoneSteps = [
+      { icon: 'smartphone', title: 'SIM-карта: номер с историей', content: 'Если вы купили новую SIM-карту, возможно, номер уже был у другого человека. Через него могут пытаться восстановить доступ к его старым аккаунтам.<br><br>• Смените PIN-код SIM-карты сразу после покупки (стандартные 0000 или 1234 надо заменить).<br>• PIN защищает SIM от использования в другом телефоне, если устройство украдут.<br>• Не храните PIN на бумажке рядом с телефоном.' },
+      { icon: 'key', title: 'PIN-код SIM-карты', content: 'PIN-код SIM-карты — это первая линия обороны.<br><br><strong>Почему это важно:</strong> без PIN злоумышленник может переставить SIM в свой телефон и получить доступ к вашим SMS с кодами подтверждения.<br><br>• Зайдите в настройки → Безопасность → Блокировка SIM-карты.<br>• Придумайте сложный PIN (не дату рождения, не 1234).<br>• Если трижды неверно введёте PIN, потребуется PUK-код (он на коробке от SIM, храните отдельно).' },
+      { icon: 'lock', title: 'Блокировка экрана', content: 'Блокировка экрана — ваш первый барьер для защиты данных, если телефон потерян или оставлен без присмотра.<br><br><strong>Варианты блокировки:</strong><br>• Графический ключ (просто, но легко подсмотреть)<br>• PIN-код (4-6 цифр, но можно подобрать)<br>• Пароль (буквы+цифры+символы, сложно взломать, но дольше вводить)<br>• Отпечаток пальца (удобно, но следы пальцев можно скопировать)<br>• Распознавание лица (быстро, но может не сработать в темноте или обмануть фото)<br><br><strong>Совет:</strong> используйте комбинацию биометрии и сложного пароля.' },
+      { icon: 'shield', title: 'Графический ключ vs Пароль', content: `<table class="w-full text-sm border-collapse border border-white/30">\n<thead>汽<th class="border border-white/10 p-1">Метод</th><th class="border border-white/10 p-1">Плюсы</th><th class="border border-white/10 p-1">Минусы</th><th class="border border-white/10 p-1">Надёжность</th> </thead>\n<tbody>\n<tr><td class="border border-white/10 p-1">Графический ключ</td><td class="border border-white/10 p-1">Быстро, легко запомнить</td><td class="border border-white/10 p-1">Проще подсмотреть, остаются следы на экране</td><td class="border border-white/10 p-1">3/10</td></tr>\n<tr><td class="border border-white/10 p-1">PIN 4 цифры</td><td class="border border-white/10 p-1">Просто</td><td class="border border-white/10 p-1">Всего 10000 комбинаций, легко подобрать</td><td class="border border-white/10 p-1">2/10</td></tr>\n<tr><td class="border border-white/10 p-1">Длинный пароль</td><td class="border border-white/10 p-1">Практически не взломать</td><td class="border border-white/10 p-1">Слишком большое количество комбинаций</td><td class="border border-white/10 p-1">9/10</td></tr>\n<tr><td class="border border-white/10 p-1">Отпечаток пальца</td><td class="border border-white/10 p-1">Удобно, быстро</td><td class="border border-white/10 p-1">Можно скопировать</td><td class="border border-white/10 p-1">6/10</td></tr>\n<tr><td class="border border-white/10 p-1">Распознавание лица</td><td class="border border-white/10 p-1">Очень быстро</td><td class="border border-white/10 p-1">Обманывается фото (на старых телефонах)</td><td class="border border-white/10 p-1">5/10</td></tr>\n</tbody>\n</table><br>Идеально: включить биометрию для удобства, но основной метод — сложный пароль.` },
+      { icon: 'download', title: 'Вредоносные приложения', content: 'Главный источник заражения телефона — приложения из непроверенных источников.<br><br>• Скачивайте программы только из официальных магазинов (Google Play, App Store, RuStore).<br>• Даже там проверяйте разработчика, отзывы, количество скачиваний.<br>• Не устанавливайте приложения из ссылок в SMS, мессенджерах или всплывающих окон.<br>• Если приложение просит установить неизвестный сертификат — это мошенники.<br>• На Android отключите «Неизвестные источники» в настройках.' },
+      { icon: 'settings', title: 'Разрешения приложений', content: 'Каждое приложение запрашивает доступ к функциям телефона. Не давайте разрешения, если они не нужны для работы.<br><br><strong>Примеры подозрительных запросов:</strong><br>• Фонарик — доступ к контактам?<br>• Игра — доступ к SMS?<br>• Калькулятор — доступ к микрофону?<br><br>• На Android и iOS можно управлять разрешениями в настройках после установки.<br>• Регулярно проверяйте список приложений с доступом к геолокации, камере, микрофону.' },
+      { icon: 'bug', title: 'Вирусы на телефоне', content: 'Вирусы на телефонах существуют, особенно на Android. Признаки заражения:<br><br>• Резкое падение производительности и быстрый разряд батареи.<br>• Появление незнакомых приложений.<br>• Навязчивая реклама в браузере или уведомлениях.<br>• Самопроизвольные списания с карты.<br><br><strong>Что делать:</strong> удалите подозрительные приложения, поставьте антивирус (Kaspersky, Avast, Malwarebytes), проверьте список устройств в аккаунте Google/Apple.' },
+      { icon: 'shield-check', title: 'Антивирусная защита', content: 'Нужен ли антивирус на телефоне?<br><br><strong>Android:</strong> да, желательно. Хотя Google Play защищает, вредоносные приложения иногда проскальзывают. Рекомендуемые бесплатные: Kaspersky, Avast, Bitdefender.<br><br><strong>iOS (iPhone):</strong> встроенная защита Apple сильна, но полной гарантии нет. Официальные антивирусы в App Store работают как сканеры (не блокируют в реальном времени, но могут проверить ссылки и Wi-Fi).<br><br>Важно: не устанавливайте несколько антивирусов одновременно — они мешают друг другу.' },
+      { icon: 'refresh-cw', title: 'Регулярное сканирование', content: 'Даже если вы осторожны, полезно периодически проверять телефон на наличие угроз.<br><br>• Раз в месяц запускайте полное сканирование антивирусом.<br>• На iPhone можно использовать бесплатный сканер (например, от Kaspersky).<br>• Проверьте список установленных приложений, удалите неиспользуемые.<br>• Следите за новостями о взломах популярных сервисов — если вы там зарегистрированы, меняйте пароль.' },
+      { icon: 'smartphone', title: 'Дополнительные советы', content: '• Не подключайте телефон к чужим компьютерам через USB — возможна кража данных.<br>• Включайте двухфакторную аутентификацию для всех важных аккаунтов.<br>• Не сохраняйте пароли в заметках телефона, используйте менеджеры паролей (Bitwarden, LastPass).<br>• Регулярно делайте резервные копии (Google Drive/iCloud).<br>• При продаже телефона делайте полный сброс до заводских настроек.' }
+    ];
+    const internetSteps = [
+      { icon: 'eye', title: 'Цифровой след', content: 'Каждое ваше действие в интернете оставляет след: поисковые запросы, посещённые сайты, лайки, комментарии, фото.<br><br><strong>Чем это опасно:</strong> данные могут быть использованы для таргетированной рекламы, мошенничества, шантажа.<br><br>• Регулярно чистите историю браузера и cookies.<br>• Используйте режим инкогнито для конфиденциальных запросов.<br>• В настройках аккаунтов отключите сохранение истории активности (Google, YouTube).<br>• Помните: удалить следы полностью невозможно, но можно минимизировать.' },
+      { icon: 'globe', title: 'VPN и PROXY', content: '<strong>VPN</strong> шифрует трафик и скрывает ваш реальный IP-адрес, подменяя его на IP сервера. Полезно в публичных Wi-Fi сетях и для обхода блокировок.<br><br><strong>Риски:</strong> бесплатные VPN могут сами собирать и продавать ваши данные. Также они могут быть медленными.<br><br><strong>Совет:</strong> выбирайте платные проверенные VPN (ProtonVPN, Mullvad, ExpressVPN) или используйте браузерные расширения от надёжных разработчиков.<br><br><strong>PROXY</strong> — более простой сервер-посредник, но не шифрует трафик полностью. Используйте осторожно.' },
+      { icon: 'message-square', title: 'Коды из SMS и двухфакторка', content: 'ЖЕЛЕЗНОЕ ПРАВИЛО: НИКОМУ НЕ СООБЩАЙТЕ КОД ИЗ SMS.<br><br>• Банки, госуслуги, соцсети никогда не спрашивают код по телефону.<br>• Если вам звонят и просят код — положите трубку.<br>• Даже если звонящий представляется службой безопасности.<br>• Лучше использовать приложения-аутентификаторы (Google Authenticator, Яндекс Ключ) вместо SMS — это безопаснее.<br>• Включите двухфакторную аутентификацию везде, где можно.' },
+      { icon: 'credit-card', title: 'Банковские карты онлайн', content: 'Правила безопасной оплаты в интернете:<br><br>• Заведите отдельную виртуальную карту для интернет-покупок (например, в Сбербанке или Тинькофф).<br>• Не храните данные карты на сайтах, если это не обязательно.<br>• Убедитесь, что сайт использует HTTPS (замочек в адресной строке).<br>• Подключите 3D-Secure (подтверждение по SMS/пушу).<br>• Регулярно проверяйте выписки, чтобы вовремя заметить подозрительные списания.<br>• При малейших сомнениях блокируйте карту через приложение.' },
+      { icon: 'anchor', title: 'Фишинг', content: 'Фишинг — вид мошенничества, когда вас заманивают на поддельный сайт, копирующий настоящий (банк, соцсеть, почта). Цель — украсть логин, пароль, данные карты.<br><br><strong>Как распознать:</strong><br>• Адрес сайта отличается на одну букву (sberbank- online.ru).<br>• Письмо с угрозами (ваш аккаунт заблокируют, если не перейдёте).<br>• Предлагают ввести личные данные после перехода по ссылке.<br>• Грамматические ошибки.<br><br>Всегда проверяйте адресную строку и не переходите по ссылкам из писем, лучше зайдите на сайт напрямую.' },
+      { icon: 'alert-triangle', title: 'Вирусы и вредоносные сайты', content: 'Заразиться вирусом можно просто зайдя на сайт (drive-by download) — без вашего клика. Особенно опасно на сайтах с пиратским контентом.<br><br>• Используйте современный браузер с защитой от фишинга (Chrome, Firefox, Edge).<br>• Установите расширение, блокирующее рекламу (uBlock Origin) — оно часто блокирует и вредоносные скрипты.<br>• Не нажимайте на всплывающие окна, обещающие выигрыш.<br>• Обновляйте браузер и ОС — в обновлениях закрывают уязвимости.' },
+      { icon: 'message-circle', title: 'Мошенники в мессенджерах', content: 'В Telegram, WhatsApp, Viber часто пишут мошенники от имени друзей, «службы безопасности», или предлагают лёгкий заработок.<br><br>• Если вам пишет знакомый с просьбой занять денег — перезвоните ему по настоящему номеру.<br>• Не переходите по ссылкам от незнакомцев.<br>• Не устанавливайте подозрительные приложения, которые вам присылают (даже от «друга» — мог быть взлом).<br>• Включите двухфакторку в Telegram и WhatsApp.<br>• Настройте, чтобы никто не мог добавить вас в группу без разрешения.' },
+      { icon: 'wifi', title: 'Общественные Wi-Fi сети', content: 'Бесплатный Wi-Fi в кафе, аэропортах, метро — зона риска. Злоумышленник может перехватывать ваш трафик.<br><br>• Не вводите пароли и не оплачивайте покупки в общественных сетях.<br>• Используйте VPN при подключении к открытому Wi-Fi.<br>• Отключите автоматическое подключение к сетям.<br>• Лучше раздавать интернет с телефона (через мобильную сеть), чем пользоваться чужим Wi-Fi.' },
+      { icon: 'lock', title: 'Пароли и их безопасность', content: 'Слабый пароль — главная дыра. Вот как создавать надёжные пароли:<br><br>• Длина не менее 12 символов.<br>• Используйте буквы разного регистра, цифры, спецсимволы.<br>• Не используйте один и тот же пароль для разных сервисов.<br>• Придумайте фразу, которую легко запомнить, но сложно подобрать (например, "МойКотЛюбитРыбку2026!").<br>• Используйте менеджер паролей (Bitwarden, 1Password) — он генерирует и хранит сложные пароли, вам нужно запомнить только один мастер-пароль.' },
+      { icon: 'shield', title: 'Что такое 2FA (двухфакторка)', content: 'Двухфакторная аутентификация (2FA) требует не только пароль, но и одноразовый код (из SMS, приложения-аутентификатора или ключа). Это почти 100% защита от взлома, даже если пароль украли.<br><br>• Включите 2FA везде, где возможно: почта, соцсети, банки, Telegram.<br>• Лучший способ — приложение-аутентификатор (Google Authenticator, Authy, Яндекс Ключ).<br>• Коды из SMS чуть менее безопасны, но лучше, чем ничего.<br>• Сохраните резервные коды в надёжном месте (бумажном или в менеджере паролей).' }
+    ];
+    const computerSteps = [
+      { icon: 'monitor', title: 'Windows: пиратские сборки', content: 'Установка неофициальной сборки Windows — огромный риск. Такие сборки часто содержат встроенные вирусы, трояны, шпионское ПО, майнеры.<br><br><strong>Последствия:</strong> кража паролей, данных карт, медленная работа, реклама.<br><br>• Покупайте лицензию или используйте официальную версию Windows с пробным периодом (можно активировать позже).<br>• Альтернатива: бесплатные ОС (Linux), если не нужен специфический софт.<br>• Не скачивайте Windows с торрентов и файлообменников.' },
+      { icon: 'package', title: 'Небезопасное ПО', content: 'Программы из непроверенных источников (кейгены, взломанный софт) часто содержат вирусы.<br><br>• Скачивайте программы только с официальных сайтов разработчиков.<br>• Не запускайте файлы с расширением .exe, полученные в мессенджерах или по email от незнакомцев.<br>• При установке внимательно читайте шаги — часто пытаются установить ненужные тулбары или рекламное ПО.<br>• Используйте сайты типа Ninite для безопасной установки популярных программ.' },
+      { icon: 'users', title: 'Учетные записи Windows', content: 'В Windows можно создавать разные учётные записи. Очень важно не использовать учётную запись администратора для повседневной работы.<br><br>• Создайте отдельную стандартную учётную запись (без прав администратора) для обычных задач.<br>• Если вирус проникнет под стандартной учёткой, он не сможет изменить системные файлы.<br>• На работе используйте корпоративную учётную запись, не смешивайте с личной.<br>• Установите сложный пароль на свою учётную запись (даже если вы один пользуетесь компьютером).' },
+      { icon: 'key', title: 'Пароль для учетной записи', content: 'Многие считают, что если компьютер дома, пароль не нужен. Это ошибка.<br><br><strong>Зачем пароль:</strong><br>• Защита от любопытных гостей или родственников.<br>• Если ноутбук украдут, пароль не спасёт, но хотя бы данные будут недоступны сразу.<br>• Некоторые вирусы не могут запуститься, если не вошли в систему.<br><br>• Используйте длинный пароль (фразу).<br>• В Windows можно настроить вход по PIN или графическому ключу для удобства, но основной пароль должен быть сложным.<br>• Включите BitLocker (шифрование диска) для защиты данных при потере.' },
+      { icon: 'shield-check', title: 'Антивирусная защита', content: 'На Windows обязательно нужен антивирус. Встроенный Защитник Windows (Defender) вполне хорош для домашнего использования.<br><br><strong>Варианты:</strong><br>• Защитник Windows (бесплатно, встроен) — достаточно для базовой защиты.<br>• Kaspersky Free — хороший бесплатный выбор.<br>• Malwarebytes — дополнительный сканер для ручной проверки (бесплатная версия).<br><br>• Не ставьте несколько антивирусов одновременно — будут конфликты.<br>• Регулярно обновляйте антивирус и проводите полное сканирование.<br>• Настройте еженедельную проверку.' },
+      { icon: 'mail', title: 'Защита почты', content: 'Электронная почта — главная цель для взломщиков. Через неё можно восстановить пароли от других сервисов.<br><br>• Используйте сложный пароль для почты (обязательно).<br>• Включите двухфакторную аутентификацию (Google, Yandex, Mail.ru поддерживают).<br>• Не открывайте вложения и не переходите по ссылкам в письмах от незнакомцев.<br>• Даже знакомые могут быть взломаны — проверяйте по телефону, если письмо странное.<br>• В настройках почты включите уведомления о входе с нового устройства.' },
+      { icon: 'globe', title: 'Защита веб-трафика', content: 'Браузер — окно в интернет, которое нужно защищать.<br><br>• Используйте современные браузеры (Chrome, Firefox, Edge) с автоматическими обновлениями.<br>• Установите расширения: uBlock Origin (блокировка рекламы и майнеров), Privacy Badger (защита от трекинга).<br>• Включите в браузере предупреждение о фишинговых сайтах.<br>• Не сохраняйте пароли в браузере без мастер-пароля (лучше использовать менеджер паролей).<br>• Регулярно чистите кэш и cookies.' },
+      { icon: 'database', title: 'Резервное копирование', content: 'Даже самая лучшая защита не даёт 100% гарантии. Резервные копии спасут ваши данные при заражении вирусом-шифровальщиком или поломке диска.<br><br>• Делайте бэкапы важных файлов на внешний диск или в облако (Google Drive, Яндекс.Диск).<br>• Используйте правило 3-2-1: три копии данных, два разных носителя, одна копия вне дома.<br>• В Windows есть встроенное средство архивации (File History).<br>• Настройте автоматическое резервное копирование, чтобы не забывать.' },
+      { icon: 'usb', title: 'Внешние носители', content: 'Флешки и внешние диски могут быть источником заражения, особенно если вы подключаете их к разным компьютерам.<br><br>• Отключите автозапуск в Windows (настройки → Автозапуск).<br>• Перед открытием флешки проверьте её антивирусом.<br>• Не используйте чужие флешки в своём компьютере.<br>• Если нужно передать файлы, лучше использовать облако или шифрованную флешку с паролем.' },
+      { icon: 'cpu', title: 'Обновления системы', content: 'Многие вирусы проникают через уязвимости, которые уже исправлены в новых версиях Windows. Если не устанавливать обновления, вы остаётесь уязвимы.<br><br>• Включите автоматическую установку обновлений.<br>• Не откладывайте перезагрузку для завершения установки.<br>• Обновляйте не только Windows, но и программы (браузер, Office, Adobe Reader).<br>• Устаревшее ПО — частая причина заражений.' }
+    ];
+
+    function getMascotSVG(variant = 'happy', className = 'w-20 h-20') {
+      let mouthPath, pointingFinger = '';
+      if (variant === 'thinking') mouthPath = '<path d="M45 65 Q60 68 75 65" stroke="#0B1E33" stroke-width="3" stroke-linecap="round" fill="none"/>';
+      else if (variant === 'happy') mouthPath = '<path d="M45 62 Q60 72 75 62" stroke="#0B1E33" stroke-width="3" stroke-linecap="round" fill="none"/>';
+      else if (variant === 'winking') mouthPath = '<path d="M45 62 Q60 70 75 62" stroke="#0B1E33" stroke-width="3" stroke-linecap="round" fill="none"/>';
+      else mouthPath = '<path d="M45 62 Q60 72 75 62" stroke="#0B1E33" stroke-width="3" stroke-linecap="round" fill="none"/>';
+      let leftEye, rightEye;
+      if (variant === 'winking') { leftEye = '<circle cx="48" cy="48" r="1" fill="#0B1E33"/>'; rightEye = '<circle cx="72" cy="48" r="5" fill="#0B1E33"/>'; }
+      else { leftEye = '<circle cx="48" cy="48" r="5" fill="#0B1E33" class="mascot-eye-left"/>'; rightEye = '<circle cx="72" cy="48" r="5" fill="#0B1E33"/>'; }
+      if (variant === 'pointing') pointingFinger = '<path class="pointing-finger" d="M85 45 L100 35 L105 38 L90 48 Z" fill="#00FF94" stroke="#0B1E33" stroke-width="2"/>';
+      return '<svg width="120" height="120" viewBox="-5 -5 130 130" class="mascot-container mascot-glow ' + className + '"><path d="M60 10 L90 25 L90 55 Q90 85 60 110 Q30 85 30 55 L30 25 Z" fill="#00FF94" stroke="#0B1E33" stroke-width="3"/><path d="M60 20 L80 30 L80 52 Q80 75 60 95 Q40 75 40 52 L40 30 Z" fill="#0B1E33" opacity="0.3"/>' + leftEye + rightEye + mouthPath + '<g transform="translate(60,70)"><rect x="-8" y="-3" width="16" height="12" rx="2" fill="#2D7EE7" /><path d="M -5 -3 L -5 -8 Q -5 -12 0 -12 Q 5 -12 5 -8 L 5 -3" fill="none" stroke="#2D7EE7" stroke-width="3" stroke-linecap="round"/><circle cx="0" cy="2" r="2" fill="#0B1E33" /></g>' + pointingFinger + '<g class="mascot-antenna"><line x1="50" y1="10" x2="50" y2="2" stroke="#2D7EE7" stroke-width="2" /><circle cx="50" cy="2" r="3" fill="#2D7EE7" /><line x1="70" y1="10" x2="70" y2="2" stroke="#2D7EE7" stroke-width="2" /><circle cx="70" cy="2" r="3" fill="#2D7EE7" /></g></svg>';
+    }
+
+    let currentSpeakingStepId = null;
+    function speakText(text) {
+      if (!window.speechSynthesis) { console.warn("Браузер не поддерживает речевой синтез."); return; }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'ru-RU'; utterance.rate = 0.9; utterance.pitch = 1.0; utterance.volume = 1.0;
+      utterance.onend = function() { currentSpeakingStepId = null; };
+      utterance.onerror = function() { currentSpeakingStepId = null; };
+      window.speechSynthesis.speak(utterance);
+    }
+    function stopSpeech() {
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      currentSpeakingStepId = null;
+    }
+    window.speakCurrentStep = function() {
+      let steps; if (currentTopic === 'phone') steps = phoneSteps; else if (currentTopic === 'internet') steps = internetSteps; else steps = computerSteps;
+      const step = steps[learningStep]; const stepId = currentTopic + '_' + learningStep;
+      if (currentSpeakingStepId === stepId) { stopSpeech(); currentSpeakingStepId = null; return; }
+      stopSpeech(); currentSpeakingStepId = stepId;
+      const plainContent = step.content.replace(/<[^>]*>/g, '');
+      const textToSpeak = step.title + '. ' + plainContent;
+      speakText(textToSpeak);
+    };
+
+    function updateActiveNav() {
+      const navItems = document.querySelectorAll('[data-nav]');
+      navItems.forEach(item => {
+        item.classList.remove('text-white', 'bg-white/20');
+        item.classList.add('text-white/80', 'hover:text-white', 'hover:bg-white/5');
+      });
+      let activeNav = null;
+      if (currentScreen === 'learning') {
+        if (currentTopic === 'phone') activeNav = 'phone';
+        else if (currentTopic === 'internet') activeNav = 'internet';
+        else if (currentTopic === 'computer') activeNav = 'computer';
+      } else if (currentScreen === 'quiz') {
+        activeNav = 'quiz';
+      } else if (currentScreen === 'game') {
+        activeNav = 'game';
+      }
+      if (activeNav) {
+        const activeItem = document.querySelector(`[data-nav="${activeNav}"]`);
+        if (activeItem) {
+          activeItem.classList.remove('text-white/80');
+          activeItem.classList.add('text-white', 'bg-white/20');
+        }
+      }
+    }
+
+    function renderScreen() {
+      const content = document.getElementById('screenContent'); let html = '';
+      if (currentScreen === 'home') html = renderHome();
+      else if (currentScreen === 'topicSelect') html = renderTopicSelect();
+      else if (currentScreen === 'learning') html = renderLearning();
+      else if (currentScreen === 'checkSelect') html = renderCheckSelect();
+      else if (currentScreen === 'quiz') html = renderQuiz();
+      else if (currentScreen === 'game') html = renderGame();
+      content.innerHTML = html; lucide.createIcons();
+      updateActiveNav();
+    }
+
+    function renderHome() {
+      return `<div class="min-h-screen w-full flex items-center justify-center"><div class="w-full px-4 lg:px-8 max-w-6xl mx-auto"><div class="grid lg:grid-cols-2 gap-12 items-center"><div class="text-center lg:text-left"><h1 class="text-5xl lg:text-7xl font-bold mb-6 py-2"><span class="bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] bg-clip-text text-transparent">Проверь свою киберсилу! </span><span>🔥</span></h1><p class="text-xl lg:text-2xl text-white/80 mb-8 leading-relaxed">Всего 30 минут — и ты научишься защищать телефон, компьютер и личные данные от мошенников. Играй и узнавай!</p><div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"><button class="px-8 py-4 bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] text-[#0B1E33] rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-[#00FF94]/50 transition-all hover:scale-105" onclick="navigateTo('topicSelect')">Пройти обучение</button><button class="px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-xl font-semibold text-lg border border-white/20 hover:bg-white/20 hover:border-[#00FF94]/50 transition-all hover:scale-105" onclick="navigateTo('checkSelect')">Проверить знания</button></div></div><div class="flex justify-center"><div class="relative">${getMascotSVG('pointing', 'w-64 h-64 lg:w-96 lg:h-96')}<div class="absolute -z-10 inset-0 bg-gradient-to-br from-[#00FF94]/30 to-[#2D7EE7]/30 blur-3xl animate-pulse"></div></div></div></div></div></div>`;
+    }
+
+    function renderTopicSelect() {
+      return `<div class="min-h-screen w-full flex items-start justify-center pt-16"><div class="w-full px-4 lg:px-8 max-w-6xl mx-auto"><h2 class="text-4xl lg:text-5xl font-bold text-white text-center mb-10">Выбери тему для обучения</h2><div class="flex flex-col md:flex-row items-center justify-center gap-8"><div class="topic-card"><div class="w-40 h-40 topic-figure"><svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-xl"><defs><linearGradient id="gradPhone" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00FF94"/><stop offset="100%" stop-color="#2D7EE7"/></linearGradient></defs><rect x="25" y="5" width="70" height="105" rx="12" fill="url(#gradPhone)" stroke="#0B1E33" stroke-width="3"/><rect x="35" y="18" width="50" height="80" rx="5" fill="#0B1E33" opacity="0.8"/><rect x="40" y="12" width="40" height="3" rx="1.5" fill="#2D7EE7" stroke="#0B1E33" stroke-width="1"/><circle cx="60" cy="23" r="2" fill="#00FF94" stroke="#0B1E33" stroke-width="1"/><circle cx="60" cy="103" r="3" fill="#2D7EE7" stroke="#0B1E33" stroke-width="2"/></svg></div><button class="topic-button" onclick="startLearning('phone')">Телефон</button></div><div class="topic-card"><div class="w-40 h-40 topic-figure"><svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-xl"><defs><linearGradient id="gradGlobe" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00FF94"/><stop offset="100%" stop-color="#2D7EE7"/></linearGradient></defs><circle cx="60" cy="60" r="35" fill="url(#gradGlobe)" stroke="#0B1E33" stroke-width="3"/><ellipse cx="60" cy="60" rx="40" ry="15" fill="none" stroke="#0B1E33" stroke-width="3"/><ellipse cx="60" cy="60" rx="15" ry="40" fill="none" stroke="#0B1E33" stroke-width="3"/><circle cx="50" cy="50" r="6" fill="#2D7EE7" opacity="0.8"/><circle cx="70" cy="70" r="6" fill="#2D7EE7" opacity="0.8"/><circle cx="45" cy="75" r="5" fill="#2D7EE7" opacity="0.8"/><ellipse cx="60" cy="60" rx="45" ry="20" fill="none" stroke="#2D7EE7" stroke-width="2" stroke-dasharray="4 4"/><circle cx="100" cy="50" r="4" fill="#00FF94" stroke="#0B1E33" stroke-width="2"/><circle cx="20" cy="20" r="2" fill="white"/><circle cx="100" cy="20" r="2" fill="white"/><circle cx="20" cy="100" r="2" fill="white"/></svg></div><button class="topic-button" onclick="startLearning('internet')">Интернет</button></div><div class="topic-card"><div class="w-40 h-40 topic-figure"><svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-xl"><defs><linearGradient id="gradMonitor" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00FF94"/><stop offset="100%" stop-color="#2D7EE7"/></linearGradient></defs><rect x="10" y="10" width="95" height="70" rx="8" fill="url(#gradMonitor)" stroke="#0B1E33" stroke-width="3"/><rect x="20" y="20" width="75" height="50" rx="4" fill="#0B1E33" opacity="0.8"/><circle cx="35" cy="35" r="4" fill="#00FF94"/><circle cx="55" cy="35" r="4" fill="#2D7EE7"/><circle cx="75" cy="35" r="4" fill="#00FF94"/><rect x="35" y="50" width="40" height="4" rx="2" fill="#2D7EE7" opacity="0.8"/><rect x="40" y="85" width="35" height="8" rx="3" fill="#2D7EE7" stroke="#0B1E33" stroke-width="2"/><rect x="30" y="93" width="55" height="5" rx="2.5" fill="#2D7EE7" stroke="#0B1E33" stroke-width="2"/><rect x="15" y="100" width="85" height="8" rx="3" fill="#2D7EE7" stroke="#0B1E33" stroke-width="2"/><circle cx="100" cy="104" r="6" fill="#00FF94" stroke="#0B1E33" stroke-width="2"/></svg></div><button class="topic-button" onclick="startLearning('computer')">Компьютер</button></div></div></div></div>`;
+    }
+
+    function renderCheckSelect() {
+      return `<div class="min-h-screen w-full flex items-start justify-center pt-16"><div class="w-full px-4 lg:px-8 max-w-6xl mx-auto"><h2 class="text-4xl lg:text-5xl font-bold text-white text-center mb-10">Что будем проверять?</h2><div class="flex flex-col md:flex-row items-center justify-center gap-8"><div class="topic-card"><div class="w-40 h-40 topic-figure relative"><svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-xl relative z-10"><defs><linearGradient id="gradBulb" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00FF94"/><stop offset="100%" stop-color="#2D7EE7"/></linearGradient></defs><ellipse cx="60" cy="55" rx="25" ry="32" fill="url(#gradBulb)" stroke="#0B1E33" stroke-width="3"/><rect x="52" y="82" width="16" height="15" rx="4" fill="#2D7EE7" stroke="#0B1E33" stroke-width="2"/><line x1="60" y1="82" x2="60" y2="72" stroke="#0B1E33" stroke-width="2"/><path class="bulb-filament" d="M50 45 Q60 35 70 45" stroke="#666" stroke-width="3" fill="none"/></svg><div class="bulb-glow absolute inset-0 w-full h-full pointer-events-none opacity-0 transition-all duration-300" style="background: radial-gradient(circle at center, rgba(255,215,0,0.6) 0%, rgba(255,215,0,0) 70%); filter: blur(12px);"></div></div><button class="topic-button" onclick="navigateTo('quiz')">Квиз</button></div><div class="topic-card"><div class="w-40 h-40 topic-figure"><svg viewBox="0 0 120 120" class="w-full h-full drop-shadow-xl"><defs><linearGradient id="gradMask" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00FF94"/><stop offset="100%" stop-color="#2D7EE7"/></linearGradient></defs><path d="M30 30 Q60 15 90 30 L90 75 Q60 95 30 75 Z" fill="#1a2a3a" stroke="#0B1E33" stroke-width="3"/><ellipse cx="45" cy="55" rx="10" ry="7" fill="white" stroke="#0B1E33" stroke-width="2"/><ellipse cx="75" cy="55" rx="10" ry="7" fill="white" stroke="#0B1E33" stroke-width="2"/><circle cx="42" cy="53" r="4" fill="#0B1E33"/><circle cx="78" cy="53" r="4" fill="#0B1E33"/><circle cx="25" cy="90" r="18" fill="none" stroke="#0B1E33" stroke-width="4"/><line x1="15" y1="80" x2="35" y2="100" stroke="#0B1E33" stroke-width="2"/><line x1="35" y1="80" x2="15" y2="100" stroke="#0B1E33" stroke-width="2"/><path d="M38 102 Q45 110 55 108" stroke="#0B1E33" stroke-width="5" fill="none" stroke-linecap="round"/></svg></div><button class="topic-button" onclick="navigateTo('game')">Найди мошенника</button></div></div></div></div>`;
+    }
+
+    function renderLearning() {
+      stopSpeech();
+      let steps; if (currentTopic === 'phone') steps = phoneSteps; else if (currentTopic === 'internet') steps = internetSteps; else steps = computerSteps;
+      const step = steps[learningStep]; const isLast = learningStep === steps.length - 1;
+      return `<div class="min-h-screen w-full flex items-start justify-center pt-4"><div class="w-full px-4 lg:px-8 max-w-3xl mx-auto"><div class="text-center mb-4"><div class="flex justify-between items-center text-white/60 text-sm mb-2"><span>Шаг ${learningStep + 1} из ${steps.length}</span><button class="hover:text-[#00FF94]" onclick="goBack()">← Назад</button></div><div class="w-full bg-[#1a3150] rounded-full h-2 mb-4"><div class="bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] h-2 rounded-full" style="width: ${((learningStep + 1) / steps.length) * 100}%;"></div></div></div><div class="bg-[#1a3150] border border-white/10 rounded-3xl p-6 lg:p-8 mb-6 relative group"><button class="absolute top-4 right-4 p-3 bg-black/30 backdrop-blur-sm rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-[#00FF94]/20 z-10" onclick="event.stopPropagation(); speakCurrentStep();" title="Озвучить / Остановить"><i data-lucide="volume-2" class="w-5 h-5 text-white"></i></button><div class="flex flex-col items-center text-center"><div class="p-3 gradient-bg rounded-xl mb-4"><i data-lucide="${step.icon}" class="w-12 h-12 text-[#00FF94]"></i></div><h3 class="text-2xl lg:text-3xl font-bold text-[#00FF94] mb-4">${step.title}</h3><div class="text-white/90 text-base leading-relaxed text-left">${step.content}</div></div></div><div class="flex justify-center gap-4">${learningStep > 0 ? '<button class="px-8 py-4 bg-white/10 border border-white/20 rounded-xl text-lg font-semibold text-white hover:bg-[#2D7EE7] transition-all" onclick="prevStep()"><i data-lucide="arrow-left" class="inline mr-2"></i>Назад</button>' : ''}${!isLast ? '<button class="px-8 py-4 bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] text-[#0B1E33] rounded-xl text-lg font-semibold hover:shadow-lg hover:shadow-[#00FF94]/50 transition-all" onclick="nextStep()">Далее <i data-lucide="arrow-right" class="inline ml-2"></i></button>' : '<button class="px-8 py-4 bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] text-[#0B1E33] rounded-xl text-lg font-semibold hover:shadow-lg hover:shadow-[#00FF94]/50 transition-all" onclick="finishLearning()">Завершить</button>'}</div></div></div>`;
+    }
+
+    function renderQuiz() {
+      const q = quizState.questions[quizState.currentQuestion];
+      const progress = ((quizState.currentQuestion + 1) / quizState.questions.length) * 100;
+      if (quizState.currentQuestion >= quizState.questions.length) return renderQuizResult();
+      return `<div class="min-h-screen w-full pt-4 pb-12"><div class="w-full px-4 lg:px-8 max-w-4xl mx-auto"><div class="mb-4"><div class="flex justify-between items-center mb-2"><span class="text-white/60">Вопрос ${quizState.currentQuestion + 1} из ${quizState.questions.length}</span><span class="text-[#00FF94] font-semibold">Счёт: ${quizState.score}</span></div><div class="w-full bg-[#1a3150] rounded-full h-3"><div class="bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] h-3 rounded-full" style="width: ${progress}%;"></div></div></div><div class="bg-[#1a3150] border border-white/10 rounded-3xl p-8 lg:p-12 mb-8"><div class="flex flex-col lg:flex-row gap-8 items-start"><div class="flex-1"><h2 class="text-2xl lg:text-3xl font-bold text-white mb-8">${q.question}</h2><div class="space-y-4">${q.options.map((opt, idx) => `<button class="quiz-option w-full p-4 rounded-xl text-left transition-all ${quizState.selectedAnswer === null ? 'bg-white/5 hover:bg-white/10 border-2 border-transparent hover:border-[#00FF94]/50 text-white' : idx === q.correct ? 'bg-[#00FF94]/20 border-2 border-[#00FF94] text-white' : idx === quizState.selectedAnswer ? 'bg-red-500/20 border-2 border-red-500 text-white' : 'bg-white/5 border-2 border-transparent text-white/50'}" onclick="selectQuizAnswer(${idx})" ${quizState.selectedAnswer !== null ? 'disabled' : ''}><div class="flex items-center gap-3">${quizState.selectedAnswer !== null ? (idx === q.correct ? '<i data-lucide="check-circle" class="text-[#00FF94] flex-shrink-0" size="24"></i>' : idx === quizState.selectedAnswer ? '<i data-lucide="x-circle" class="text-red-500 flex-shrink-0" size="24"></i>' : '') : ''}<span class="flex-1">${opt}</span></div></button>`).join('')}</div></div><div class="hidden lg:block lg:w-auto relative flex flex-col items-center mt-40">${quizState.showExplanation ? `<div class="speech-bubble absolute right-0 bottom-full mb-2 z-10" style="right: -200px; min-width: 250px;">${q.explanation}</div>` : ''}${getMascotSVG(quizState.showExplanation ? (quizState.selectedAnswer === q.correct ? 'happy' : 'thinking') : 'pointing', 'w-60 h-60')}</div></div></div>${quizState.showExplanation ? `<div class="flex justify-center"><button class="px-8 py-4 bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] text-[#0B1E33] rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-[#00FF94]/50 transition-all hover:scale-105" onclick="nextQuizQuestion()">${quizState.currentQuestion < quizState.questions.length - 1 ? 'Следующий вопрос' : 'Завершить'}</button></div>` : ''}<div class="lg:hidden mt-8 flex flex-col items-center">${quizState.showExplanation ? `<div class="speech-bubble mb-4" style="max-width: 90%;">${q.explanation}</div>${getMascotSVG(quizState.showExplanation ? (quizState.selectedAnswer === q.correct ? 'happy' : 'thinking') : 'pointing', 'w-48 h-48')}` : ''}</div></div></div>`;
+    }
+
+    function renderQuizResult() {
+      const percent = (quizState.score / quizState.questions.length) * 100;
+      return `<div class="min-h-screen w-full pt-4 pb-12"><div class="w-full px-4 lg:px-8 max-w-4xl mx-auto"><div class="flex flex-col items-center"><div class="w-full max-w-2xl"><div class="bg-[#1a3150] border border-white/10 rounded-3xl p-8 lg:p-12"><i data-lucide="trophy" class="w-20 h-20 text-[#00FF94] mx-auto mb-6"></i><h1 class="text-4xl lg:text-5xl font-bold text-white text-center mb-4">Квиз завершён!</h1><div class="text-6xl font-bold bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] bg-clip-text text-transparent text-center mb-4">${quizState.score} / ${quizState.questions.length}</div><p class="text-xl text-white/80 text-center mb-8">${percent === 100 ? 'Идеально! Ты настоящий киберэксперт! 🏆' : percent >= 80 ? 'Отлично! Ты хорошо разбираешься в безопасности! 🌟' : percent >= 60 ? 'Хорошо! Но есть куда расти! 💪' : percent >= 40 ? 'Неплохо! Рекомендую пройти материалы ещё раз 📚' : 'Нужно подучиться! Начни с главной страницы 🔄'}</p><div class="w-full bg-[#0B1E33] rounded-full h-4 mb-8"><div class="bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] h-4 rounded-full" style="width: ${percent}%;"></div></div><div class="flex flex-col sm:flex-row gap-4 justify-center"><button class="px-8 py-4 bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] text-[#0B1E33] rounded-xl font-semibold hover:shadow-lg hover:shadow-[#00FF94]/50 transition-all hover:scale-105 flex items-center justify-center gap-2" onclick="restartQuiz()"><i data-lucide="rotate-ccw" size="20"></i>Пройти снова</button><button class="px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-xl font-semibold border border-white/20 hover:bg-white/20 hover:border-[#00FF94]/50 transition-all hover:scale-105 flex items-center justify-center gap-2" onclick="goHome()"><i data-lucide="home" size="20"></i>На главную</button></div></div></div><div class="mt-8 flex justify-center">${getMascotSVG('happy', 'w-48 h-48 lg:w-64 lg:h-64')}</div></div></div></div>`;
+    }
+
+    function renderGame() {
+      const msg = gameState.messages[gameState.currentMessage];
+      if (gameState.currentMessage >= gameState.messages.length) return renderGameResult();
+      let cardHighlightClass = '';
+      if (gameState.showResult) {
+        cardHighlightClass = gameState.selectedAnswer === msg.isScam ? 'border-[#00FF94] bg-[#00FF94]/10' : 'border-red-500 bg-red-500/10';
+      } else {
+        cardHighlightClass = 'border-white/20 bg-transparent';
+      }
+
+      return `<div class="min-h-screen w-full pt-4 pb-12"><div class="w-full px-4 lg:px-8 max-w-5xl mx-auto"><div class="mb-4"><div class="flex justify-between items-center mb-2"><span class="text-white/60">Сообщение ${gameState.currentMessage + 1} из ${gameState.messages.length}</span><span class="text-[#00FF94] font-semibold">Счёт: ${gameState.score}</span></div><div class="w-full bg-[#1a3150] rounded-full h-3"><div class="bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] h-3 rounded-full" style="width: ${((gameState.currentMessage + 1) / gameState.messages.length) * 100}%;"></div></div></div><div class="flex justify-center"><div class="relative"><div class="max-w-md w-full transition-all duration-300"><div class="bg-[#1a3150] border-4 rounded-[2.5rem] p-4 shadow-2xl ${cardHighlightClass}"><div class="bg-[#0B1E33] rounded-t-3xl p-4 mb-2"><div class="flex items-center gap-3"><div class="w-10 h-10 rounded-full bg-gradient-to-br from-[#00FF94] to-[#2D7EE7] flex items-center justify-center"><i data-lucide="smartphone" size="20" class="text-[#0B1E33]"></i></div><div class="flex-1"><div class="text-white font-semibold">${msg.from}</div>${msg.subject ? `<div class="text-white/60 text-sm">${msg.subject}</div>` : ''}<div class="text-white/40 text-xs">${msg.type === 'sms' ? 'SMS' : 'Email'}</div></div></div></div><div class="bg-white/5 rounded-2xl p-6 min-h-[250px]"><p class="text-white whitespace-pre-line leading-relaxed">${msg.message}</p></div></div>${!gameState.showResult ? `<div class="flex flex-col sm:flex-row gap-4 justify-center mt-8"><button class="px-8 py-4 bg-red-500/20 border-2 border-red-500 text-white rounded-xl font-semibold hover:bg-red-500/30 transition-all hover:scale-105 flex items-center justify-center gap-2" onclick="selectGameAnswer(true)"><i data-lucide="alert-triangle" size="20"></i>Это мошенники</button><button class="px-8 py-4 bg-[#00FF94]/20 border-2 border-[#00FF94] text-white rounded-xl font-semibold hover:bg-[#00FF94]/30 transition-all hover:scale-105 flex items-center justify-center gap-2" onclick="selectGameAnswer(false)"><i data-lucide="check-circle" size="20"></i>Всё нормально</button></div>` : ''}${gameState.showResult ? `<div class="flex justify-center mt-8"><button class="px-8 py-4 bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] text-[#0B1E33] rounded-xl font-semibold text-lg hover:shadow-lg hover:shadow-[#00FF94]/50 transition-all hover:scale-105" onclick="nextGameMessage()">${gameState.currentMessage < gameState.messages.length - 1 ? 'Следующее сообщение' : 'Завершить'}</button></div>` : ''}</div><div class="hidden lg:block absolute left-full top-1/2 transform -translate-y-1/2 ml-4">${gameState.showResult ? `<div class="speech-bubble game-bubble" style="top: -90px; left: 85%;">${msg.explanation}</div>` : ''}${getMascotSVG(gameState.showResult ? (gameState.selectedAnswer === msg.isScam ? 'happy' : 'thinking') : 'pointing', 'w-60 h-60')}</div></div></div><div class="lg:hidden mt-8 flex flex-col items-center">${gameState.showResult ? `<div class="speech-bubble mb-4" style="max-width: 90%;">${msg.explanation}</div>${getMascotSVG(gameState.showResult ? (gameState.selectedAnswer === msg.isScam ? 'happy' : 'thinking') : 'pointing', 'w-48 h-48')}` : ''}</div></div></div>`;
+    }
+
+    function renderGameResult() {
+      const percent = (gameState.score / gameState.messages.length) * 100;
+      return `<div class="min-h-screen w-full pt-4 pb-12"><div class="w-full px-4 lg:px-8 max-w-2xl mx-auto text-center">${getMascotSVG('happy', 'w-40 h-40 mx-auto mb-8')}<div class="bg-[#1a3150] border border-white/10 rounded-3xl p-8 lg:p-12 mb-8"><i data-lucide="alert-triangle" class="w-20 h-20 text-[#00FF94] mx-auto mb-6"></i><h1 class="text-4xl lg:text-5xl font-bold text-white mb-4">Детектив завершён!</h1><div class="text-6xl font-bold bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] bg-clip-text text-transparent mb-4">${gameState.score} / ${gameState.messages.length}</div><p class="text-xl text-white/80 mb-8">${percent === 100 ? 'Идеально! Ты — настоящий детектив мошенничества! 🕵️' : percent >= 75 ? 'Отлично! Мошенникам будет сложно тебя обмануть! 🌟' : percent >= 50 ? 'Хорошо! Но будь внимательнее! 👀' : 'Нужно быть осторожнее! Пройди ещё раз! 🔄'}</p><div class="w-full bg-[#0B1E33] rounded-full h-4 mb-8"><div class="bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] h-4 rounded-full" style="width: ${percent}%;"></div></div></div><div class="flex flex-col sm:flex-row gap-4 justify-center"><button class="px-8 py-4 bg-gradient-to-r from-[#00FF94] to-[#2D7EE7] text-[#0B1E33] rounded-xl font-semibold hover:shadow-lg hover:shadow-[#00FF94]/50 transition-all hover:scale-105 flex items-center justify-center gap-2" onclick="restartGame()"><i data-lucide="rotate-ccw" size="20"></i>Пройти снова</button><button class="px-8 py-4 bg-white/10 backdrop-blur-sm text-white rounded-xl font-semibold border border-white/20 hover:bg-white/20 hover:border-[#00FF94]/50 transition-all hover:scale-105 flex items-center justify-center gap-2" onclick="goHome()"><i data-lucide="home" size="20"></i>На главную</button></div></div></div>`;
+    }
+
+    window.navigateTo = function(screen) {
+      stopSpeech();
+      if (screen === 'quiz') { quizState.currentQuestion = 0; quizState.selectedAnswer = null; quizState.showExplanation = false; quizState.score = 0; currentScreen = 'quiz'; }
+      else if (screen === 'game') { gameState.currentMessage = 0; gameState.selectedAnswer = null; gameState.showResult = false; gameState.score = 0; currentScreen = 'game'; }
+      else { currentScreen = screen; }
+      renderScreen();
+    };
+    window.goHome = function() { stopSpeech(); currentScreen = 'home'; renderScreen(); };
+    window.goBack = function() { stopSpeech(); if (currentScreen === 'learning') { currentScreen = 'topicSelect'; renderScreen(); } else { goHome(); } };
+    window.startLearning = function(topic) { stopSpeech(); currentTopic = topic; learningStep = 0; currentScreen = 'learning'; renderScreen(); };
+    window.nextStep = function() {
+      stopSpeech(); let steps; if (currentTopic === 'phone') steps = phoneSteps; else if (currentTopic === 'internet') steps = internetSteps; else steps = computerSteps;
+      if (learningStep < steps.length - 1) { learningStep++; renderScreen(); }
+    };
+    window.prevStep = function() { stopSpeech(); if (learningStep > 0) { learningStep--; renderScreen(); } };
+    window.finishLearning = function() { stopSpeech(); currentScreen = 'topicSelect'; renderScreen(); };
+    window.selectQuizAnswer = function(idx) {
+      if (quizState.selectedAnswer !== null) return;
+      quizState.selectedAnswer = idx; quizState.showExplanation = true;
+      if (idx === quizState.questions[quizState.currentQuestion].correct) quizState.score++;
+      renderScreen();
+    };
+    window.nextQuizQuestion = function() {
+      if (quizState.currentQuestion < quizState.questions.length - 1) { quizState.currentQuestion++; quizState.selectedAnswer = null; quizState.showExplanation = false; }
+      else { quizState.currentQuestion = quizState.questions.length; }
+      renderScreen();
+    };
+    window.restartQuiz = function() { stopSpeech(); quizState.currentQuestion = 0; quizState.selectedAnswer = null; quizState.showExplanation = false; quizState.score = 0; renderScreen(); };
+    window.selectGameAnswer = function(isScam) {
+      if (gameState.selectedAnswer !== null) return;
+      gameState.selectedAnswer = isScam; gameState.showResult = true;
+      if (isScam === gameState.messages[gameState.currentMessage].isScam) gameState.score++;
+      renderScreen();
+    };
+    window.nextGameMessage = function() {
+      if (gameState.currentMessage < gameState.messages.length - 1) { gameState.currentMessage++; gameState.selectedAnswer = null; gameState.showResult = false; }
+      else { gameState.currentMessage = gameState.messages.length; }
+      renderScreen();
+    };
+    window.restartGame = function() { stopSpeech(); gameState.currentMessage = 0; gameState.selectedAnswer = null; gameState.showResult = false; gameState.score = 0; renderScreen(); };
+
+    document.getElementById('mobileMenuBtn').addEventListener('click', () => { document.getElementById('mobileNav').classList.toggle('hidden'); });
+    document.getElementById('logo').addEventListener('click', goHome);
+    renderScreen();
+  </script>
+</body>
+</html>
