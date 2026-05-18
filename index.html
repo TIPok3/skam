@@ -23,7 +23,7 @@
       padding: 30px;
       border-radius: 16px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      max-width: 500px;
+      max-width: 550px;
       width: 100%;
     }
     .warning-box {
@@ -37,7 +37,7 @@
     }
     video {
       width: 100%;
-      max-width: 640px;
+      max-width: 100%;
       border-radius: 12px;
       margin-top: 20px;
       background: #000;
@@ -64,20 +64,32 @@
       margin: 10px 0;
     }
     .hidden { display: none; }
-    .error { color: #ff6b6b; }
+    .error { color: #ff6b6b; margin: 10px 0; }
+    .log-area {
+      background: #111;
+      color: #0f0;
+      font-family: monospace;
+      font-size: 13px;
+      padding: 10px;
+      border-radius: 8px;
+      margin-top: 15px;
+      text-align: left;
+      max-height: 150px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+    .log-area span.error-log { color: #f44; }
+    .log-area span.warn-log { color: #fa0; }
   </style>
 </head>
 <body>
   <div class="card" id="app">
-    <!-- Контент заполняется JS -->
+    <!-- Динамическое содержимое -->
   </div>
 
-  <!-- Подключаем PeerJS с CDN -->
   <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
-
   <script>
     (function() {
-      // Параметры URL
       const params = new URLSearchParams(window.location.search);
       const role = params.get('role');        // 'viewer' или 'sender'
       const targetPeerId = params.get('peer'); // ID зрителя (для отправителя)
@@ -85,43 +97,55 @@
       const app = document.getElementById('app');
       let peer;
       let localStream;
-      let currentCall; // чтобы можно было разорвать звонок
+      let currentCall;
+      let logContainer; // DOM-элемент для логов на экране
 
-      // Функция остановки камеры
+      // Функция для вывода сообщения в UI-лог и в консоль
+      function log(message, type = 'info') {
+        console.log(`[${type.toUpperCase()}] ${message}`);
+        if (logContainer) {
+          const span = document.createElement('span');
+          if (type === 'error') span.className = 'error-log';
+          else if (type === 'warn') span.className = 'warn-log';
+          span.textContent = `[${new Date().toLocaleTimeString()}] ${message}\n`;
+          logContainer.appendChild(span);
+          logContainer.scrollTop = logContainer.scrollHeight;
+        }
+      }
+
       function stopCamera() {
         if (localStream) {
           localStream.getTracks().forEach(track => track.stop());
           localStream = null;
+          log('Камера остановлена');
         }
       }
 
-      // Инициализация PeerJS с резервным сервером
+      // Инициализация PeerJS
       function initPeer() {
-        // Основной сервер PeerJS Cloud
+        // Основной и резервный сервера
         const primaryConfig = {
           host: '0.peerjs.com',
           port: 443,
           path: '/',
           secure: true,
-          debug: 2
+          debug: 3 // максимум логов
         };
-        // Резервный публичный сервер (можно заменить на свой)
         const fallbackConfig = {
           host: 'peerjs-server.herokuapp.com',
           port: 443,
           path: '/',
           secure: true,
-          debug: 2
+          debug: 3
         };
 
         function connectWithConfig(config, isFallback = false) {
-          if (peer) {
-            peer.destroy();
-          }
+          if (peer) peer.destroy();
           peer = new Peer(config);
+          log(`Подключение к сигнальному серверу: ${config.host}...`, isFallback ? 'warn' : 'info');
 
           peer.on('open', (myPeerId) => {
-            console.log('✅ Подключён к', config.host, 'ID:', myPeerId);
+            log(`✅ Успешное подключение. Мой Peer ID: ${myPeerId}`);
             if (role === 'viewer') {
               renderViewer(myPeerId);
             } else if (role === 'sender' && targetPeerId) {
@@ -132,13 +156,13 @@
           });
 
           peer.on('error', (err) => {
-            console.error('❌ Ошибка PeerJS:', err.type, err);
+            log(`❌ Ошибка PeerJS: ${err.type} – ${err.message || ''}`, 'error');
             if (err.type === 'server-error' && config.host === primaryConfig.host) {
-              // Переключаемся на резерв
-              console.warn('Основной сервер недоступен, пробую запасной...');
-              app.innerHTML = '<p>Проблема с основным сервером, переключаюсь на запасной...</p>';
+              log('Переключаюсь на запасной сигнальный сервер...', 'warn');
+              app.innerHTML = '<p>Проблема с основным сервером, пробую запасной...</p>';
               connectWithConfig(fallbackConfig, true);
             } else if (err.type === 'peer-unavailable') {
+              log('Указанный Peer ID не найден. Возможно, зритель не в сети.', 'error');
               alert('Пользователь с таким ID не найден. Попроси друга обновить страницу и получить новый ID.');
             } else {
               alert('Ошибка соединения: ' + err.type + '. Попробуйте обновить страницу или проверьте интернет.');
@@ -146,16 +170,15 @@
           });
 
           peer.on('disconnected', () => {
-            console.log('Соединение потеряно, пытаюсь переподключиться...');
+            log('Соединение с сигнальным сервером потеряно, переподключение...', 'warn');
             peer.reconnect();
           });
         }
 
-        // Стартуем с основного сервера
         connectWithConfig(primaryConfig);
       }
 
-      // --- Интерфейс ЗРИТЕЛЯ (тот, кто смотрит) ---
+      // --- Интерфейс ЗРИТЕЛЯ ---
       function renderViewer(myId) {
         app.innerHTML = `
           <h2>🎥 Ты — зритель</h2>
@@ -167,14 +190,18 @@
           </div>
           <p style="margin-top:15px;">Ожидаю подключения друга...</p>
           <div id="videoContainer"></div>
+          <div class="log-area" id="logArea"></div>
         `;
+        logContainer = document.getElementById('logArea');
+        log('Страница зрителя загружена. Ожидание звонка.');
 
-        // Принимаем звонок от отправителя
         peer.on('call', (call) => {
           currentCall = call;
-          // Отвечаем без своего видео (односторонняя передача)
+          log('📞 Входящий звонок от отправителя...');
           call.answer();
+          log('Звонок принят, ожидание видеопотока.');
           call.on('stream', (remoteStream) => {
+            log('🎬 Видеопоток получен!');
             const container = document.getElementById('videoContainer');
             container.innerHTML = '';
             const video = document.createElement('video');
@@ -185,19 +212,18 @@
             container.appendChild(video);
           });
           call.on('close', () => {
-            const container = document.getElementById('videoContainer');
-            container.innerHTML = '<p>Трансляция завершена.</p>';
+            log('Звонок завершён отправителем.');
+            document.getElementById('videoContainer').innerHTML = '<p>Трансляция завершена.</p>';
           });
           call.on('error', (err) => {
-            console.error('Ошибка звонка:', err);
+            log(`Ошибка звонка: ${err}`, 'error');
           });
         });
       }
 
-      // --- Интерфейс ОТПРАВИТЕЛЯ (друг, который показывает камеру) ---
+      // --- Интерфейс ОТПРАВИТЕЛЯ ---
       function renderSender(myId) {
         const target = targetPeerId;
-
         app.innerHTML = `
           <h2>📡 Трансляция для друга</h2>
           <div class="warning-box">
@@ -209,17 +235,20 @@
           <button class="btn-start" id="startBtn">✅ Да, я согласен, начать трансляцию</button>
           <button class="btn-stop hidden" id="stopBtn">⏹ Остановить</button>
           <div id="localVideoContainer" style="margin-top:20px;"></div>
+          <div class="log-area" id="logArea"></div>
         `;
+        logContainer = document.getElementById('logArea');
+        log('Страница отправителя загружена. Целевой ID: ' + target);
 
         const startBtn = document.getElementById('startBtn');
         const stopBtn = document.getElementById('stopBtn');
 
         startBtn.addEventListener('click', async () => {
+          log('Запрос доступа к веб-камере...');
           try {
-            // Запрос камеры
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-
-            // Показываем локальное видео (друг видит себя)
+            log('Доступ к камере получен.');
+            // Показываем локальное видео
             const localVideo = document.createElement('video');
             localVideo.srcObject = localStream;
             localVideo.autoplay = true;
@@ -227,32 +256,38 @@
             localVideo.playsInline = true;
             localVideo.style.maxWidth = '300px';
             document.getElementById('localVideoContainer').appendChild(localVideo);
+            log('Локальное видео отображается.');
 
             // Звоним зрителю
+            log(`Звоню зрителю с ID: ${target}...`);
             currentCall = peer.call(target, localStream);
             currentCall.on('error', (err) => {
-              console.error('Ошибка при звонке:', err);
+              log(`Ошибка звонка: ${err}`, 'error');
               alert('Не удалось соединиться. Проверь, что друг открыл страницу зрителя и его ID актуален.');
             });
+            currentCall.on('stream', (remoteStream) => {
+              log('Получен встречный поток (хотя мы не ожидали).');
+            });
             currentCall.on('close', () => {
+              log('Звонок закрыт.');
               stopCameraAndCleanup();
             });
 
             startBtn.classList.add('hidden');
             stopBtn.classList.remove('hidden');
           } catch (err) {
-            console.error('Ошибка доступа к камере:', err);
+            log(`Ошибка доступа к камере: ${err.name} – ${err.message}`, 'error');
             alert('Не удалось получить доступ к камере. Разреши использование в браузере.');
           }
         });
 
         stopBtn.addEventListener('click', () => {
+          log('Остановка трансляции пользователем.');
           stopCameraAndCleanup();
         });
 
         function stopCameraAndCleanup() {
           stopCamera();
-          // Останавливаем звонок
           if (currentCall) {
             currentCall.close();
             currentCall = null;
@@ -260,6 +295,7 @@
           document.getElementById('localVideoContainer').innerHTML = '';
           startBtn.classList.remove('hidden');
           stopBtn.classList.add('hidden');
+          log('Трансляция остановлена, камера выключена.');
         }
       }
 
@@ -268,13 +304,15 @@
         app.innerHTML = `
           <h2>❌ Ошибка</h2>
           <p>${message}</p>
-          <p><a href="?role=viewer">Открыть как зритель</a> | <a href="?role=sender&peer=ID">Открыть как отправитель (нужен ID)</a></p>
+          <p><a href="?role=viewer">Открыть как зритель</a> | <a href="?role=sender&peer=ID">Открыть как отправитель</a></p>
+          <div class="log-area" id="logArea"></div>
         `;
+        logContainer = document.getElementById('logArea');
+        log(message, 'error');
       }
 
       // --- Точка входа ---
       if (!role) {
-        // Если роль не указана — показываем меню
         app.innerHTML = `
           <h2>📹 Честная вебка-трансляция</h2>
           <p>Выбери режим:</p>
@@ -286,10 +324,10 @@
         initPeer();
       }
 
-      // Очистка при уходе со страницы
       window.addEventListener('beforeunload', () => {
         stopCamera();
         if (peer) peer.destroy();
+        log('Страница закрыта.');
       });
     })();
   </script>
